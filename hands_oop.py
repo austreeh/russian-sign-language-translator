@@ -48,11 +48,11 @@ class handDetector():
 
 # for index finger
 # 5, 6, 7 on image
-def getFingerPose(point_one, point_two, point_three):
+def getAngle(point_one, point_two, point_three, edge):
     # point_one = ALWAYS WRIST POINT (0)
     # point_two = 5 (for index finger)
     # point_three  = 6 (for index finger)
-    # point_four = 7 (for index finger)
+    # edge is edge for action
     # point structure is [id, [x, y, z]]
 
     # preparations
@@ -73,14 +73,40 @@ def getFingerPose(point_one, point_two, point_three):
                                     alpha_point_three[2]*alpha_point_three[2]
                                 )) * (180 / math.pi)
     
-    if alpha > 150:
-        return "Hello!"
+    # print(alpha)
+    return alpha > edge
+    
+# point one is palm point, other - for finger
+# alpha and beta edges - angle bariers
+def fingerPose(point_one, point_two, point_three, point_four, alpha_edge, beta_edge):
+    if getAngle(point_one, point_two, point_three, alpha_edge):
+        if getAngle(point_two, point_three, point_four, beta_edge):
+            return "direct"
+        else:
+            return "arc"
     else:
-        return "RRRAAAWWWRRR"    
-    
-    # return alpha
-    
+        if getAngle(point_two, point_three, point_four, beta_edge):
+            return "half"
+        else:
+            return "fold"
 
+# get direction of hand
+# point_one is for palm point, point_two is for middle finer firs point
+def getDirection(point_one, point_two):
+    if point_one[1][1] > point_two[1][1]:
+        return "Up"
+    else:
+        return "Down"
+
+# distance function for two landmarks
+def getDistance(point_one, point_two):
+    return math.sqrt((point_two[1][0] - point_one[1][0]) * (point_two[1][0] - point_one[1][0]) +
+                    (point_two[1][1] - point_one[1][1]) * (point_two[1][1] - point_one[1][1]) +
+                    (point_two[1][2] - point_one[1][2]) * (point_two[1][2] - point_one[1][2]))
+
+# check if landmarks are "touched"
+def isTouched(point_one, point_two, touch_edge):
+    return getDistance(point_one, point_two) <= touch_edge
 
 # main function
 def main():
@@ -97,8 +123,22 @@ def main():
         image = detector.findHands(img)
         landmarks_list = detector.findPosition(img)
         if len(landmarks_list) != 0:
-            print(getFingerPose(landmarks_list[5], landmarks_list[6], landmarks_list[7]))
-            # print(landmarks_list[5])
+            # pose for index finger
+            # print(fingerPose(landmarks_list[0], landmarks_list[5], landmarks_list[6], landmarks_list[7], 150, 110))
+
+            # direction 
+            print(getDirection(landmarks_list[0], landmarks_list[9]))
+
+            # distance index-big
+            # print(getDistance(landmarks_list[4], landmarks_list[8]))
+
+            # touch index-big
+            # print(isTouched(landmarks_list[4], landmarks_list[8], getDistance(landmarks_list[3], landmarks_list[4]) / 1.2))
+
+            # index-middle finger angle
+            # true - close
+            # false - far
+            # print(getFingerPose(landmarks_list[6], landmarks_list[5], landmarks_list[10],160))
 
         # calculate fps
         cTime = time.time()
@@ -113,11 +153,6 @@ def main():
         
         if cv2.waitKey(10) & 0xFF == ord('q'):
                 break
-
-
-
-
-
 
 
 if __name__ == "__main__":
