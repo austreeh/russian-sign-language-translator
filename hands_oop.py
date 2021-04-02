@@ -5,6 +5,12 @@ import time
 import math
 import numpy as np
 
+from hands_configuration import *
+from db import Database
+
+# connect to DB
+db = Database("signs.db")
+
 #           variables:  one_two
 # classes and methods:  oneTwo
 
@@ -108,6 +114,41 @@ def getDistance(point_one, point_two):
 def isTouched(point_one, point_two, touch_edge):
     return getDistance(point_one, point_two) <= touch_edge
 
+
+def getStaticGesture(landmarks, edges):
+    # edges can be used later as action triggers (List)
+    result = []
+
+    # direction
+    result.append(getDirection(landmarks[0], landmarks[9]))
+
+    # big_finger
+    result.append(fingerPose(landmarks[1], landmarks[2], landmarks[3], landmarks[4], BIG_ALPHA_ANGLE, BIG_BETA_ANGLE))
+    # index_finger
+    result.append(fingerPose(landmarks[0], landmarks[5], landmarks[6], landmarks[7], INDEX_ALPHA_ANGLE, INDEX_BETA_ANGLE))
+    # middle_finger
+    result.append(fingerPose(landmarks[0], landmarks[9], landmarks[10], landmarks[11], MIDDLE_ALPHA_ANGLE, MIDDLE_BETA_ANGLE))
+    # ring_finger
+    result.append(fingerPose(landmarks[0], landmarks[13], landmarks[14], landmarks[15], RING_ALPHA_ANGLE, RING_BETA_ANGLE))
+    # little_finger
+    result.append(fingerPose(landmarks[0], landmarks[17], landmarks[18], landmarks[19], LITTLE_ALPHA_ANGLE, LITTLE_BETA_ANGLE))
+
+    # touch index-big
+    result.append(isTouched(landmarks[4], landmarks[8], getDistance(landmarks[3], landmarks[4]) / 1.2))   
+    # touch middle-big
+    result.append(isTouched(landmarks[4], landmarks[12], getDistance(landmarks[3], landmarks[4]) / 1.2))
+    # touch ring-big
+    result.append(isTouched(landmarks[4], landmarks[16], getDistance(landmarks[3], landmarks[4]) / 1.2))
+
+    # index_middle_closed
+    result.append(getAngle(landmarks[6], landmarks[5], landmarks[10],INDEX_MIDDLE_ANGLE))
+
+    # middle_ring_closed
+    result.append(getAngle(landmarks[10], landmarks[9], landmarks[14], MIDDLE_RING_ANGLE))
+
+    print(result)
+    return db.get_element(result)
+
 # main function
 def main():
     pTime = 0
@@ -123,22 +164,49 @@ def main():
         image = detector.findHands(img)
         landmarks_list = detector.findPosition(img)
         if len(landmarks_list) != 0:
+            # finger poses #############
+            # pose for big finger
+            # print(fingerPose(landmarks_list[1], landmarks_list[2], landmarks_list[3], landmarks_list[4], 0, 150))
+            
             # pose for index finger
             # print(fingerPose(landmarks_list[0], landmarks_list[5], landmarks_list[6], landmarks_list[7], 150, 110))
 
-            # direction 
-            print(getDirection(landmarks_list[0], landmarks_list[9]))
+            # pose for middle finger
+            # print(fingerPose(landmarks_list[0], landmarks_list[9], landmarks_list[10], landmarks_list[11], 150, 110))
+
+            # pose for ring finger
+            # print(fingerPose(landmarks_list[0], landmarks_list[13], landmarks_list[14], landmarks_list[15], 150, 130))
+
+            # pose for little finger
+            # print(fingerPose(landmarks_list[0], landmarks_list[17], landmarks_list[18], landmarks_list[19], 150, 130))
+
+            # direction #################
+            # print(getDirection(landmarks_list[0], landmarks_list[9]))
 
             # distance index-big
             # print(getDistance(landmarks_list[4], landmarks_list[8]))
 
+            # touches check ####################
             # touch index-big
             # print(isTouched(landmarks_list[4], landmarks_list[8], getDistance(landmarks_list[3], landmarks_list[4]) / 1.2))
+            
+            # touch middle-big
+            # print(isTouched(landmarks_list[4], landmarks_list[12], getDistance(landmarks_list[3], landmarks_list[4]) / 1.2))
 
-            # index-middle finger angle
+            # touch ring-big
+            # print(isTouched(landmarks_list[4], landmarks_list[16], getDistance(landmarks_list[3], landmarks_list[4]) / 1.2))
+
+
+            # Open - Closed fingers ###################
             # true - close
             # false - far
-            # print(getFingerPose(landmarks_list[6], landmarks_list[5], landmarks_list[10],160))
+            # index-middle
+            # print(getAngle(landmarks_list[6], landmarks_list[5], landmarks_list[10],160))
+
+            # middle - ring
+            # print(getAngle(landmarks_list[10], landmarks_list[9], landmarks_list[14],158))
+            print(getStaticGesture(landmarks_list, []))
+
 
         # calculate fps
         cTime = time.time()
