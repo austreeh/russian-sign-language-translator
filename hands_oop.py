@@ -134,11 +134,11 @@ def getStaticGesture(landmarks, edges):
     result.append(fingerPose(landmarks[0], landmarks[17], landmarks[18], landmarks[19], LITTLE_ALPHA_ANGLE, LITTLE_BETA_ANGLE))
 
     # touch index-big
-    result.append(isTouched(landmarks[4], landmarks[8], getDistance(landmarks[3], landmarks[4]) / 1.2))   
+    result.append(isTouched(landmarks[4], landmarks[8], getDistance(landmarks[3], landmarks[4])))   
     # touch middle-big
-    result.append(isTouched(landmarks[4], landmarks[12], getDistance(landmarks[3], landmarks[4]) / 1.2))
+    result.append(isTouched(landmarks[4], landmarks[12], getDistance(landmarks[3], landmarks[4])))
     # touch ring-big
-    result.append(isTouched(landmarks[4], landmarks[16], getDistance(landmarks[3], landmarks[4]) / 1.2))
+    result.append(isTouched(landmarks[4], landmarks[16], getDistance(landmarks[3], landmarks[4])))
 
     # index_middle_closed
     result.append(getAngle(landmarks[6], landmarks[5], landmarks[10],INDEX_MIDDLE_ANGLE))
