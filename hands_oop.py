@@ -79,8 +79,22 @@ def getAngle(point_one, point_two, point_three, edge):
                                     alpha_point_three[2]*alpha_point_three[2]
                                 )) * (180 / math.pi)
     
-    # print(alpha)
     return alpha > edge
+
+def getFingerAngle(point_two, point_three, foo, index_high_point, middle_high_point):
+    if foo:
+        if (index_high_point[1][0] > middle_high_point[1][0]):
+            if point_two[1][0] < point_three[1][0]:
+                return "cross"
+            else:
+                return "close"
+        else:
+            if point_two[1][0] > point_three[1][0]:
+                return "cross"
+            else:
+                return "close"
+    else:
+        return "open"
     
 # point one is palm point, other - for finger
 # alpha and beta edges - angle bariers
@@ -133,18 +147,21 @@ def getStaticGesture(landmarks, edges):
     # little_finger
     result.append(fingerPose(landmarks[0], landmarks[17], landmarks[18], landmarks[19], LITTLE_ALPHA_ANGLE, LITTLE_BETA_ANGLE))
 
+
     # touch index-big
-    result.append(isTouched(landmarks[4], landmarks[8], getDistance(landmarks[3], landmarks[4])))   
+    result.append(isTouched(landmarks[4], landmarks[7], getDistance(landmarks[3], landmarks[4]) * 1.4))   
     # touch middle-big
-    result.append(isTouched(landmarks[4], landmarks[12], getDistance(landmarks[3], landmarks[4])))
+    result.append(isTouched(landmarks[4], landmarks[11], getDistance(landmarks[3], landmarks[4]) * 1.4))
     # touch ring-big
-    result.append(isTouched(landmarks[4], landmarks[16], getDistance(landmarks[3], landmarks[4])))
+    result.append(isTouched(landmarks[4], landmarks[15], getDistance(landmarks[3], landmarks[4]) * 1.4))
 
     # index_middle_closed
-    result.append(getAngle(landmarks[6], landmarks[5], landmarks[10],INDEX_MIDDLE_ANGLE))
+    # result.append(getAngle(landmarks[6], landmarks[5], landmarks[10],INDEX_MIDDLE_ANGLE))
+    result.append(getFingerAngle(landmarks[5], landmarks[9], getAngle(landmarks[6], landmarks[5], landmarks[10], INDEX_MIDDLE_ANGLE), landmarks[8], landmarks[12]))
 
     # middle_ring_closed
-    result.append(getAngle(landmarks[10], landmarks[9], landmarks[14], MIDDLE_RING_ANGLE))
+    # result.append(getAngle(landmarks[10], landmarks[9], landmarks[14], MIDDLE_RING_ANGLE))
+    result.append(getFingerAngle(landmarks[9], landmarks[13], getAngle(landmarks[10], landmarks[9], landmarks[14], MIDDLE_RING_ANGLE), landmarks[12], landmarks[16]))
 
     print(result)
     return db.get_element(result)
@@ -201,10 +218,16 @@ def main():
             # true - close
             # false - far
             # index-middle
-            # print(getAngle(landmarks_list[6], landmarks_list[5], landmarks_list[10],160))
+            # print(getAngle(landmarks_list[6], landmarks_list[5], landmarks_list[10],160, landmarks_list[8], landmarks_list[12]))
 
             # middle - ring
             # print(getAngle(landmarks_list[10], landmarks_list[9], landmarks_list[14],158))
+            
+            # big finger test
+            # fingerPose(landmarks_list[1], landmarks_list[2], landmarks_list[3], landmarks_list[4], 0, 150)
+            # print(" ")
+
+
             print(getStaticGesture(landmarks_list, []))
 
 
