@@ -35,8 +35,9 @@ class handDetector():
         if self.results.multi_hand_landmarks:
             for hand_landmarks in self.results.multi_hand_landmarks:
                 if draw:
-                    self.mp_draw.draw_landmarks(image, hand_landmarks, 
-                                                self.mp_hands.HAND_CONNECTIONS)
+                    self.mp_draw.draw_landmarks(image, hand_landmarks, self.mp_hands.HAND_CONNECTIONS, 
+                    self.mp_draw.DrawingSpec(color=(255,0,0), thickness=2, circle_radius=3),
+                    self.mp_draw.DrawingSpec(color=(255,255,255), thickness=2, circle_radius=2))
         
         return image
 
@@ -128,6 +129,8 @@ def getDistance(point_one, point_two):
 def isTouched(point_one, point_two, touch_edge):
     return getDistance(point_one, point_two) <= touch_edge
 
+def getMiddle(point_one, point_two):
+    return [0,[(point_one[1][0]+point_two[1][0])/2, (point_one[1][1]+point_two[1][1])/2, (point_one[1][2]+point_two[1][2])/2]]
 
 def getStaticGesture(landmarks, edges):
     # edges can be used later as action triggers (List)
@@ -149,9 +152,9 @@ def getStaticGesture(landmarks, edges):
 
 
     # touch index-big
-    result.append(isTouched(landmarks[4], landmarks[7], getDistance(landmarks[3], landmarks[4]) * 1.4))   
+    result.append(isTouched(landmarks[4], getMiddle(landmarks[7], landmarks[8]) , getDistance(landmarks[3], landmarks[4]) * 1.4))   
     # touch middle-big
-    result.append(isTouched(landmarks[4], landmarks[11], getDistance(landmarks[3], landmarks[4]) * 1.4))
+    result.append(isTouched(landmarks[4], getMiddle(landmarks[11], landmarks[12]), getDistance(landmarks[3], landmarks[4]) * 1.4))
     # touch ring-big
     result.append(isTouched(landmarks[4], landmarks[15], getDistance(landmarks[3], landmarks[4]) * 1.4))
 

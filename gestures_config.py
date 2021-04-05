@@ -17,13 +17,15 @@ FINGER_POSES = ["direct", "half", "arc", "fold"]
 # rfp - ring_finger_pose
 # lfp - little_finger_pose
 
+# allow direct little finger test + allow direct big finger
 # A
-for bit in TOUCHES:
-    for bmt in TOUCHES:
-        for brt in TOUCHES:
-            for ima in ANGLES[0:2]:
-                for mra in ANGLES[0:2]:
-                    gestures_list.append(["A", "Up", "arc", "fold", "fold", "fold", "fold", bit, bmt, brt, ima, mra])
+for lfp in FINGER_POSES[0:4:3]:
+    for bit in TOUCHES:
+        for bmt in TOUCHES:
+            for brt in TOUCHES:
+                for ima in ANGLES[0:2]:
+                    for mra in ANGLES[0:2]:
+                        gestures_list.append(["A", "Up", "arc", "fold", "fold", "fold", lfp, bit, bmt, brt, ima, mra])
 
 # B
 for bfp in BIG_POSES:
@@ -47,10 +49,11 @@ for bfp in BIG_POSES:
         gestures_list.append(["D", "Up", bfp, "direct", "direct", "fold", "fold", False, False, True, "close", mra])
 
 # Ye
-for brt in TOUCHES:
-    for ima in ANGLES[0:2]:
-        for mra in ANGLES[0:2]:
-            gestures_list.append(["Ye", "Up", "direct", "arc", "arc", "arc", "arc", True, True, brt, ima, mra])
+for bmt in TOUCHES:
+    for brt in TOUCHES:
+        for ima in ANGLES[0:2]:
+            for mra in ANGLES[0:2]:
+                gestures_list.append(["Ye", "Up", "direct", "arc", "arc", "arc", "arc", True, bmt, brt, ima, mra])
 
 # Yo # same as Ye but with trajectory
 
@@ -119,10 +122,11 @@ for mfp in FINGER_POSES[2:4]:
 
 # S
 for bfp in BIG_POSES:
-    for lfp in FINGER_POSES[0:3:2]:
-        for ima in ANGLES:
-            for mra in ANGLES:
-                gestures_list.append(["S", "Up", bfp, "arc", "arc", "arc", lfp, False, False, False, ima, mra])
+    for mfp in FINGER_POSES[0:3:2]:
+        for lfp in FINGER_POSES[0:3:2]:
+            for ima in ANGLES:
+                for mra in ANGLES:
+                    gestures_list.append(["S", "Up", bfp, "arc", mfp, "arc", lfp, False, False, False, ima, mra])
 
 # T
 for bfp in BIG_POSES:
@@ -132,14 +136,20 @@ for bfp in BIG_POSES:
                 gestures_list.append(["T", "Down", bfp, ifp, mfp, rfp, "fold", False, False, False, "close", "close"])
 
 # U
-for ima in ANGLES:
-    for mra in ANGLES:
-        gestures_list.append(["U", "Up", "direct", "fold", "fold", "fold", "direct", False, False, False, ima, mra])
+for ifp in FINGER_POSES[1:4]:
+    for mfp in FINGER_POSES[1:4]:
+        for rfp in FINGER_POSES[1:4]:
+            for ima in ANGLES:
+                for mra in ANGLES:
+                    gestures_list.append(["U", "Up", "direct", ifp, mfp, rfp, "direct", False, False, False, ima, mra])
 
 # F
-for ima in ANGLES:
-    for mra in ANGLES:
-        gestures_list.append(["F", "Up", "direct", "half", "half", "half", "half", False, False, False, ima, mra])
+for ifp in FINGER_POSES[1:4:2]:
+    for rfp in FINGER_POSES[1:4:2]:
+        for lfp in FINGER_POSES[1:4:2]:
+            for ima in ANGLES:
+                for mra in ANGLES:
+                    gestures_list.append(["F", "Up", "direct", ifp, "half", rfp, lfp, False, False, False, ima, mra])
 
 # H
 for bfp in BIG_POSES:
@@ -150,7 +160,13 @@ for bfp in BIG_POSES:
 
 # Ts # Use B, dynamic
 
-# Ch # need fix
+# Ch
+for bfp in BIG_POSES:
+    for ima in ANGLES:
+        for mra in ANGLES:
+            gestures_list.append(["Ch", "Up", bfp, "half", "half", "fold", "fold", True, True, False, ima, mra])
+            gestures_list.append(["Ch", "Up", bfp, "half", "fold", "fold", "fold", True, True, False, ima, mra])
+            gestures_list.append(["Ch", "Up", bfp, "fold", "half", "fold", "fold", True, True, False, ima, mra])
 
 # Sh
 for mfp in FINGER_POSES[0:2]:
@@ -173,6 +189,7 @@ for bfp in BIG_POSES:
                 for ima in ANGLES:
                     for mra in ANGLES:
                         gestures_list.append(["bl", "Up", bfp, "direct", mfp, rfp, "direct", False, True, brt, ima, mra])
+                        gestures_list.append(["bl", "Up", bfp, "direct", mfp, rfp, "direct", True, False, brt, ima, mra]) # ?
 
 # Hard # use Soft, dynamic
 
@@ -183,6 +200,15 @@ for bfp in BIG_POSES:
                 gestures_list.append(["E", "Up", bfp, "arc", "fold", "fold", "fold", False, False, False, ima, mra])
 
 # Ju
+for bfp in BIG_POSES:
+    for ifp in FINGER_POSES[1:4:1]:
+        for mfp in FINGER_POSES[1:4:1]:
+            for rfp in FINGER_POSES[1:4:1]:
+                for bmt in TOUCHES:
+                    for ima in ANGLES:
+                        for mra in ANGLES:
+                            gestures_list.append(["Ju", "Up", bfp, ifp, mfp, rfp, "direct", True, bmt, False, ima, mra])
+
 
 # Ya
 for bfp in BIG_POSES:
