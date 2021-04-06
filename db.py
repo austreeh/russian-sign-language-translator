@@ -34,10 +34,10 @@ class Database:
         self.conn.close()
 
 
-db = Database('signs.db')
+# db = Database('signs.db')
 
-for element in gestures_list:
-    db.insert(element)
+# for element in gestures_list:
+#     db.insert(element)
 
 # db.insert(A1)
 # db.insert(A2)

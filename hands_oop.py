@@ -11,6 +11,9 @@ from db import Database
 # connect to DB
 db = Database("signs.db")
 
+static_gestures = ["A", "B", "V", "G", "Ye", "Zh", "L", "M", "N", "O", "P", "R", "S", "T", "U", "F", "H", "Ch", "Sh", "bl", "E", "Yu", "Ya"]
+
+
 #           variables:  one_two
 # classes and methods:  oneTwo
 
@@ -166,8 +169,41 @@ def getStaticGesture(landmarks, edges):
     # result.append(getAngle(landmarks[10], landmarks[9], landmarks[14], MIDDLE_RING_ANGLE))
     result.append(getFingerAngle(landmarks[9], landmarks[13], getAngle(landmarks[10], landmarks[9], landmarks[14], MIDDLE_RING_ANGLE), landmarks[12], landmarks[16]))
 
-    print(result)
+    # print(result)
+    # should return xyz some of points
     return db.get_element(result)
+
+class gestureDetector():
+    
+    letter = ''
+    true_letter = 0
+    fault = 0
+    
+    def __init__(self):
+        self.letter_approve = 9 #frames
+        self.letter_fault = 3 # frames
+    
+    def cleanVariables(self):
+        gestureDetector.letter = ''
+        gestureDetector.true_letter = 0
+        gestureDetector.fault = 0
+
+    def checkFrame(self, letter):
+        # print(self.letter, letter, self.fault, self.true_letter)
+        if letter != None:
+            if letter == gestureDetector.letter:
+                gestureDetector.true_letter += 1
+                if gestureDetector.true_letter == self.letter_approve:
+                    print(letter[0], end='',flush=True)
+                    gestureDetector.fault = 0
+                    # gestureDetector.true_letter = 0
+            else:
+                gestureDetector.fault += 1
+                if gestureDetector.fault >= self.letter_fault:
+                    gestureDetector.true_letter = 0
+                    gestureDetector.fault = 0
+                    gestureDetector.letter = letter
+        
 
 # main function
 def main():
@@ -183,6 +219,7 @@ def main():
         success, img = cap.read()
         image = detector.findHands(img)
         landmarks_list = detector.findPosition(img)
+        gd = gestureDetector()
         if len(landmarks_list) != 0:
             # finger poses #############
             # pose for big finger
@@ -230,8 +267,10 @@ def main():
             # fingerPose(landmarks_list[1], landmarks_list[2], landmarks_list[3], landmarks_list[4], 0, 150)
             # print(" ")
 
+            gd.checkFrame(getStaticGesture(landmarks_list, []))
+            # print(getStaticGesture(landmarks_list, []))
+            
 
-            print(getStaticGesture(landmarks_list, []))
 
 
         # calculate fps
