@@ -49,8 +49,12 @@ for ifp in FINGER_POSES[0:2]:
 
 # D
 for bfp in BIG_POSES:
-    for mra in ANGLES[0:2]:
-        gestures_list.append(["Д", "Up", bfp, "direct", "direct", "fold", "fold", False, False, True, "close", mra])
+    for brt in TOUCHES:
+        for mra in ANGLES[0:2]:
+            gestures_list.append(["Д", "Up", bfp, "direct", "direct", "fold", "fold", False, False, brt, "close", mra])
+# fix add
+gestures_list.append(["Д",'Up', 'direct', 'direct', 'direct', 'fold', 'fold', False, False, False, 'open', 'open'])
+
 
 # Ye
 for bfp in BIG_POSES:

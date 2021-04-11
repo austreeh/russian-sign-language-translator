@@ -11,8 +11,8 @@ from db import Database
 # connect to DB
 db = Database("signs.db")
 
-static_gestures = ["A", "B", "V", "G", "Ye", "Zh", "L", "M", "N", "O", "P", "R", "S", "T", "U", "F", "H", "Ch", "Sh", "bl", "E", "Yu", "Ya"]
-
+static_gestures = ["А", "Б", "В", "Г", "Е", "Ж", "Л", "М", "Н", "О", "П", "Р", "С", "Т", "У", "Ф", "Х", "Ч", "Ы", "Э", "Ю", "Я"]
+dynamic_gestures = ["Д", "Ш", "И", "З", "К", "Ь"]
 
 #           variables:  one_two
 # classes and methods:  oneTwo
@@ -41,6 +41,7 @@ class handDetector():
                     self.mp_draw.draw_landmarks(image, hand_landmarks, self.mp_hands.HAND_CONNECTIONS, 
                     self.mp_draw.DrawingSpec(color=(255,0,0), thickness=2, circle_radius=3),
                     self.mp_draw.DrawingSpec(color=(255,255,255), thickness=2, circle_radius=2))
+
         
         return image
 
@@ -49,7 +50,6 @@ class handDetector():
         landmarks_list = []
         if self.results.multi_hand_landmarks:
             my_hand = self.results.multi_hand_landmarks[hand_number]
-
             for id, lm in enumerate(my_hand.landmark):
                 landmarks_list.append([id, [lm.x, lm.y, lm.z]])
 
@@ -135,8 +135,7 @@ def isTouched(point_one, point_two, touch_edge):
 def getMiddle(point_one, point_two):
     return [0,[(point_one[1][0]+point_two[1][0])/2, (point_one[1][1]+point_two[1][1])/2, (point_one[1][2]+point_two[1][2])/2]]
 
-def getStaticGesture(landmarks, edges):
-    # edges can be used later as action triggers (List)
+def getStaticGesture(landmarks):
     result = []
 
     # direction
@@ -170,40 +169,123 @@ def getStaticGesture(landmarks, edges):
     result.append(getFingerAngle(landmarks[9], landmarks[13], getAngle(landmarks[10], landmarks[9], landmarks[14], MIDDLE_RING_ANGLE), landmarks[12], landmarks[16]))
 
     # print(result)
-    # should return xyz some of points
-    return db.get_element(result)
+    # return letter and index and ring fingers highest points xyz
+    return [db.get_element(result), landmarks[8], landmarks[16]]
 
 class gestureDetector():
     
+    trajectory_index = []
+    trajectory_ring = []
     letter = ''
     true_letter = 0
     fault = 0
     
     def __init__(self):
-        self.letter_approve = 9 #frames
-        self.letter_fault = 3 # frames
-    
+        self.static_letter_approve = 13 #frames
+        self.dynamic_letter_approve = 20 # frames # maybe change to 9
+        self.static_letter_fault = 4 # frames
+        self.dynamic_letter_fault = 50 # frames # maybe change to 3
+
     def cleanVariables(self):
         gestureDetector.letter = ''
         gestureDetector.true_letter = 0
         gestureDetector.fault = 0
+        gestureDetector.trajectory_index = []
+        gestureDetector.trajectory_ring = []
 
-    def checkFrame(self, letter):
-        # print(self.letter, letter, self.fault, self.true_letter)
+    def twoPointDist(self, first_point, second_point):
+        return math.sqrt( (second_point[0] - first_point[0]) * (second_point[0] - first_point[0]) +
+                        (second_point[1] - first_point[1]) * (second_point[1] - first_point[1]) )
+
+    def getTwoDimensionAngle(self, first_point, second_point, third_point):
+        p1 = np.array(first_point) - np.array(second_point)
+        p2 = np.array(third_point) - np.array(second_point)
+
+        return math.acos((p1[0]*p2[0] + p1[1]*p2[1]) / ((math.sqrt((p1[0]*p1[0]) + (p1[1]*p1[1]))) * math.sqrt((p2[0]*p2[0]) + (p2[1]*p2[1]))))
+
+    def getIndexTrajectory(self):
+        if gestureDetector.letter == 'Ь':
+            edge = len(gestureDetector.trajectory_index)//3
+            list_of_x = [item[0] for item in gestureDetector.trajectory_index]
+            min_start_x = min(list_of_x[0:edge])
+            max_start_x = max(list_of_x[0:edge])
+
+            min_end_x = min(list_of_x[edge:])
+            max_end_x = max(list_of_x[edge:])
+
+            if abs(min_start_x - max_end_x) > abs(max_start_x - min_end_x):
+                return "Ъ"
+            else:
+                return "Ь" 
+        if gestureDetector.letter == 'Д':
+            list_of_x = [item[0] for item in gestureDetector.trajectory_index]
+            list_of_y = [item[1] for item in gestureDetector.trajectory_index]
+
+            # max "left" point
+            mlpoint = gestureDetector.trajectory_index[list_of_x.index(min(list_of_x))]
+            # max "down" point
+            mdpoint = gestureDetector.trajectory_index[list_of_y.index(min(list_of_y))]
+            # max "right" point
+            mrpoint = gestureDetector.trajectory_index[list_of_x.index(max(list_of_x))]
+            # max "upper" point 
+            mupoint = gestureDetector.trajectory_index[list_of_y.index(max(list_of_y))]
+
+            traj_h = abs(mupoint[1] - mdpoint[1])
+            traj_w = abs(mlpoint[0] - mrpoint[0])
+
+            # print(traj_h, traj_w)
+
+            if traj_w >= traj_h/2:
+                return "Д"
+            else:
+                return "Ц"
+
+    def drawTraj(self, image):
+        if gestureDetector.trajectory_index:
+            for point in gestureDetector.trajectory_index:
+                cv2.circle(image,(int(round(1280*point[0])),int(round(720*point[1]))), 10, (0,0,255), -1)
+        # cv2.rectangle(image,(0,0),(1280,720),(0,255,0),3)
+
+    def checkFrame(self, letter_pack):
+        letter = letter_pack[0]
         if letter != None:
+            letter = letter[0]
+        # print(letter)
+        
+        index_finger_points = letter_pack[1][1]
+        ring_finger_points = letter_pack[2][1]
+
+        if gestureDetector.letter in dynamic_gestures:
             if letter == gestureDetector.letter:
                 gestureDetector.true_letter += 1
-                if gestureDetector.true_letter == self.letter_approve:
-                    print(letter[0], end='',flush=True)
-                    gestureDetector.fault = 0
-                    # gestureDetector.true_letter = 0
+                gestureDetector.trajectory_index.append(index_finger_points)
+                gestureDetector.trajectory_ring.append(ring_finger_points)
+                if gestureDetector.true_letter == self.dynamic_letter_approve:
+                    print(self.getIndexTrajectory(), end='',flush=True)
+                    self.cleanVariables()
             else:
                 gestureDetector.fault += 1
-                if gestureDetector.fault >= self.letter_fault:
-                    gestureDetector.true_letter = 0
-                    gestureDetector.fault = 0
+                gestureDetector.trajectory_index.append(index_finger_points)
+                gestureDetector.trajectory_ring.append(ring_finger_points)
+                if gestureDetector.fault >= self.dynamic_letter_fault:
+                    self.cleanVariables()
                     gestureDetector.letter = letter
-        
+        else:
+            if letter != None:
+                if letter == gestureDetector.letter:
+                    gestureDetector.true_letter += 1
+                    if gestureDetector.true_letter == self.static_letter_approve:
+                        print(letter[0], end='',flush=True)
+                        self.cleanVariables()
+                else:
+                    gestureDetector.fault += 1
+                    if gestureDetector.fault >= self.static_letter_fault:
+                        self.cleanVariables()
+                        gestureDetector.letter = letter
+            else:
+                gestureDetector.trajectory_index.append(index_finger_points)
+                gestureDetector.trajectory_ring.append(ring_finger_points)
+            
 
 # main function
 def main():
@@ -220,6 +302,8 @@ def main():
         image = detector.findHands(img)
         landmarks_list = detector.findPosition(img)
         gd = gestureDetector()
+        # cv2.rectangle(image,(0,0),(1280,720),(0,255,0),3)
+
         if len(landmarks_list) != 0:
             # finger poses #############
             # pose for big finger
@@ -267,8 +351,10 @@ def main():
             # fingerPose(landmarks_list[1], landmarks_list[2], landmarks_list[3], landmarks_list[4], 0, 150)
             # print(" ")
 
-            gd.checkFrame(getStaticGesture(landmarks_list, []))
-            # print(getStaticGesture(landmarks_list, []))
+            gd.checkFrame(getStaticGesture(landmarks_list))
+            gd.drawTraj(image)
+
+            # print(getStaticGesture(landmarks_list)[0])
             
 
 
