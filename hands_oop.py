@@ -4,7 +4,9 @@ import mediapipe as mp
 import time
 import math
 import numpy as np
+import tensorflow as tf
 
+from hand_detector import *
 from hands_configuration import *
 from db import Database
 
@@ -16,45 +18,6 @@ dynamic_gestures = ["Д", "Ш", "И", "З", "К", "Ь"]
 
 #           variables:  one_two
 # classes and methods:  oneTwo
-
-class handDetector():
-    def __init__(self, mode=False, max_hands=1, detection_conf=0.5, track_conf=0.5):
-        self.mode = mode
-        self.max_hands = max_hands
-        self.detection_conf = detection_conf
-        self.track_conf = track_conf
-
-        # need to comment it !!!!
-        self.mp_hands = mp.solutions.hands
-        self.hands = self.mp_hands.Hands(self.mode, self.max_hands, 
-                                        self.detection_conf, self.track_conf)
-        self.mp_draw = mp.solutions.drawing_utils
-
-    def findHands(self, img, draw=True):
-        image = cv2.cvtColor(cv2.flip(img, 1), cv2.COLOR_BGR2RGB)
-        self.results = self.hands.process(image)
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-
-        if self.results.multi_hand_landmarks:
-            for hand_landmarks in self.results.multi_hand_landmarks:
-                if draw:
-                    self.mp_draw.draw_landmarks(image, hand_landmarks, self.mp_hands.HAND_CONNECTIONS, 
-                    self.mp_draw.DrawingSpec(color=(255,0,0), thickness=2, circle_radius=3),
-                    self.mp_draw.DrawingSpec(color=(255,255,255), thickness=2, circle_radius=2))
-
-        
-        return image
-
-
-    def findPosition(self, img, hand_number=0):
-        landmarks_list = []
-        if self.results.multi_hand_landmarks:
-            my_hand = self.results.multi_hand_landmarks[hand_number]
-            for id, lm in enumerate(my_hand.landmark):
-                landmarks_list.append([id, [lm.x, lm.y, lm.z]])
-
-        # list of [id, x, y, z]
-        return landmarks_list
 
 # for index finger
 # 5, 6, 7 on image
@@ -172,8 +135,7 @@ def getStaticGesture(landmarks):
     # return letter and index and ring fingers highest points xyz
     return [db.get_element(result), landmarks[8], landmarks[16]]
 
-class gestureDetector():
-    
+class gestureDetector(): 
     trajectory_index = []
     trajectory_ring = []
     letter = ''
@@ -246,12 +208,23 @@ class gestureDetector():
                 cv2.circle(image,(int(round(1280*point[0])),int(round(720*point[1]))), 10, (0,0,255), -1)
         # cv2.rectangle(image,(0,0),(1280,720),(0,255,0),3)
 
+    def drawFrame(self, image, color, time):
+        # can do it smarter
+        if color == "R":
+            cv2.rectangle(image, (0,0), (1280, 720), (0,0,255), 10)
+            cv2.putText(image, str(time), (1200,50), cv2.FONT_HERSHEY_TRIPLEX, 1, (0, 0, 255), 2)
+        if color == "G":
+            cv2.rectangle(image, (0,0), (1280, 720), (0,255,0), 10)
+            cv2.putText(image, str(time), (1200,50), cv2.FONT_HERSHEY_TRIPLEX, 1, (0, 255, 0), 2)
+        if color == "Y":
+            cv2.rectangle(image, (0,0), (1280, 720), (0, 255, 255), 10)
+            cv2.putText(image, str(time), (1200,50), cv2.FONT_HERSHEY_TRIPLEX, 1, (0, 255, 255), 2)
+
     def checkFrame(self, letter_pack):
         letter = letter_pack[0]
         if letter != None:
             letter = letter[0]
         # print(letter)
-        
         index_finger_points = letter_pack[1][1]
         ring_finger_points = letter_pack[2][1]
 
@@ -286,15 +259,87 @@ class gestureDetector():
                 gestureDetector.trajectory_index.append(index_finger_points)
                 gestureDetector.trajectory_ring.append(ring_finger_points)
             
+def getMaxCountedLetter(lst):
+    print(lst)
+    if lst:
+        return max(lst,key=lst.count)
+
+def drawTraj(image, traj_lst):
+    if traj_lst:
+        for point in traj_lst:
+            cv2.circle(image,(int(round(1280*point[0])),int(round(720*point[1]))), 10, (0,0,255), -1)
+        for i in range(1,len(traj_lst)):
+            start_point = (int(round(1280*traj_lst[i-1][0])), int(round(720*traj_lst[i-1][1])))
+            end_point = (int(round(1280*traj_lst[i][0])), int(round(720*traj_lst[i][1])))
+            cv2.arrowedLine(image, start_point, end_point, (200, 100, 0), 4)
+
+def trajToImg(traj_lst):
+    trj_image = np.ones((720, 1280)) * 255 # create empty image
+    # draw trajectory by dots
+    if traj_lst:
+        for i in range(1,len(traj_lst)):
+            start_point = (int(round(1280*traj_lst[i-1][0])), int(round(720*traj_lst[i-1][1])))
+            end_point = (int(round(1280*traj_lst[i][0])), int(round(720*traj_lst[i][1])))
+            cv2.line(trj_image, start_point, end_point, (0, 0, 0), 40)
+        
+    # crop trajectory to square
+        list_of_x = [item[0] for item in traj_lst] 
+        list_of_y = [item[1] for item in traj_lst]
+        # max "left" point
+        minX = round(min(list_of_x) * 1280)
+        # max "down" point
+        minY = round(min(list_of_y) * 720)
+        # max "right" point
+        maxX = round(max(list_of_x) * 1280)
+        # max "upper" point 
+        maxY = round(max(list_of_y) * 720)
+        # get height and width of trajectory "box" 
+        height = maxY - minY
+        width = maxX - minX
+        # cget cutting borders
+        if height > width:
+            maxX = maxX + (height//2 - width//2) 
+            minX = minX - (height//2 - width//2)
+        else:
+            maxY = maxY + (width//2 - height//2) 
+            minY = minY - (width//2 - height//2)
+        # CUT CUT CUT
+        crop_image = trj_image[minY-100:maxY+100, minX-100:maxX+100]
+    
+    # resize square to 28x28
+        resized_image = cv2.resize(crop_image, (28, 28))
+        cv2.imwrite('blank_image.jpg', resized_image)
+
+def recognTraj(image_path, recognition_model):
+    im = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    im = cv2.bitwise_not(im)
+    im = tf.keras.utils.normalize(im, axis=1)
+
+    # prediction
+    prediction = recognition_model.predict([np.array([im])])
+    res = np.argmax(prediction)
+    if res == 2:
+        print("-")
+    else:
+        print(res)
 
 # main function
 def main():
     pTime = 0
     cTime = 0
-
+    gesture_time = time.time()
+    colors = ["R", "Y", "G"]
+    i = 0
     cap = cv2.VideoCapture(0)
 
+    track_time = time.time()
+
     detector = handDetector()
+
+    test_gesture_list = []
+    traj_gesture_list = []
+
+    prediction_model = tf.keras.models.load_model('trajectory_recognition.model')
 
     while True:
         # get input image
@@ -302,61 +347,32 @@ def main():
         image = detector.findHands(img)
         landmarks_list = detector.findPosition(img)
         gd = gestureDetector()
-        # cv2.rectangle(image,(0,0),(1280,720),(0,255,0),3)
 
-        if len(landmarks_list) != 0:
-            # finger poses #############
-            # pose for big finger
-            # print(fingerPose(landmarks_list[1], landmarks_list[2], landmarks_list[3], landmarks_list[4], 0, 150))
-            
-            # pose for index finger
-            # print(fingerPose(landmarks_list[0], landmarks_list[5], landmarks_list[6], landmarks_list[7], 150, 110))
-
-            # pose for middle finger
-            # print(fingerPose(landmarks_list[0], landmarks_list[9], landmarks_list[10], landmarks_list[11], 150, 110))
-
-            # pose for ring finger
-            # print(fingerPose(landmarks_list[0], landmarks_list[13], landmarks_list[14], landmarks_list[15], 150, 130))
-
-            # pose for little finger
-            # print(fingerPose(landmarks_list[0], landmarks_list[17], landmarks_list[18], landmarks_list[19], 150, 130))
-
-            # direction #################
-            # print(getDirection(landmarks_list[0], landmarks_list[9]))
-
-            # distance index-big
-            # print(getDistance(landmarks_list[4], landmarks_list[8]))
-
-            # touches check ####################
-            # touch index-big
-            # print(isTouched(landmarks_list[4], landmarks_list[8], getDistance(landmarks_list[3], landmarks_list[4]) / 1.2))
-            
-            # touch middle-big
-            # print(isTouched(landmarks_list[4], landmarks_list[12], getDistance(landmarks_list[3], landmarks_list[4]) / 1.2))
-
-            # touch ring-big
-            # print(isTouched(landmarks_list[4], landmarks_list[16], getDistance(landmarks_list[3], landmarks_list[4]) / 1.2))
-
-
-            # Open - Closed fingers ###################
-            # true - close
-            # false - far
-            # index-middle
-            # print(getAngle(landmarks_list[6], landmarks_list[5], landmarks_list[10],160, landmarks_list[8], landmarks_list[12]))
-
-            # middle - ring
-            # print(getAngle(landmarks_list[10], landmarks_list[9], landmarks_list[14],158))
-            
-            # big finger test
-            # fingerPose(landmarks_list[1], landmarks_list[2], landmarks_list[3], landmarks_list[4], 0, 150)
-            # print(" ")
-
-            gd.checkFrame(getStaticGesture(landmarks_list))
-            gd.drawTraj(image)
-
-            # print(getStaticGesture(landmarks_list)[0])
-            
-
+        # gesture analisys
+        if (round(time.time() - track_time, 1) >= 0.125):
+            if len(landmarks_list) != 0:
+                # gd.checkFrame(getStaticGesture(landmarks_list))
+                # gd.drawTraj(image)
+                test_gesture_list.append(getStaticGesture(landmarks_list)[0])
+                traj_gesture_list.append(getStaticGesture(landmarks_list)[1][1])
+                # print(getStaticGesture(landmarks_list)[1][1])
+                # print(traj_gesture_list)
+            track_time = time.time()
+                
+        if colors[i] == "G":
+            drawTraj(image, traj_gesture_list)
+        # draw frame
+        gTime = round(time.time() - gesture_time, 1)
+        gd.drawFrame(image, colors[i], gTime)
+        if (gTime > 3):
+            gesture_time = time.time()
+            i = (i+1) % 3
+            print(getMaxCountedLetter(test_gesture_list))
+            if colors[i] == "R":
+                trajToImg(traj_gesture_list)
+                recognTraj("blank_image.jpg", prediction_model)
+            test_gesture_list = []
+            traj_gesture_list = []
 
 
         # calculate fps
