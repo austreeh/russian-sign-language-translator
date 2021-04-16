@@ -24,11 +24,8 @@ class handDetector():
                 if draw:
                     self.mp_draw.draw_landmarks(image, hand_landmarks, self.mp_hands.HAND_CONNECTIONS, 
                     self.mp_draw.DrawingSpec(color=(255,0,0), thickness=2, circle_radius=3),
-                    self.mp_draw.DrawingSpec(color=(255,255,255), thickness=2, circle_radius=2))
-
-        
+                    self.mp_draw.DrawingSpec(color=(255,255,255), thickness=2, circle_radius=2)) 
         return image
-
 
     def findPosition(self, img, hand_number=0):
         landmarks_list = []

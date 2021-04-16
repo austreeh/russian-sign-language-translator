@@ -36,4 +36,4 @@ class Database:
 # db = Database('signs.db')
 
 # for element in gestures_list:
-#     db.insert(element)
+    # db.insert(element)

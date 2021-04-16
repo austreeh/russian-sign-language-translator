@@ -19,9 +19,6 @@ FINGER_POSES = ["direct", "half", "arc", "fold"]
 
 # allow direct little finger test
 
-# Русские буквы вперёд!
-
-
 # A
 for lfp in FINGER_POSES[0:4:3]:
     for bit in TOUCHES:
@@ -63,8 +60,15 @@ for bfp in BIG_POSES:
             for ima in ANGLES[0:2]:
                 for mra in ANGLES[0:2]:
                     gestures_list.append(["Е", "Up", bfp, "arc", "arc", "arc", "arc", True, bmt, brt, ima, mra])
-
-# Yo # same as Ye but with trajectory
+gestures_list.append(['Е','Up', 'arc', 'arc', 'direct', 'direct', 'arc', True, True, True, 'close', 'close'])
+gestures_list.append(['Е','Up', 'direct', 'arc', 'direct', 'arc', 'arc', True, True, True, 'close', 'close'])
+gestures_list.append(['Е','Up', 'direct', 'arc', 'direct', 'direct', 'direct', True, True, True, 'close', 'close'])
+gestures_list.append(['Е','Up', 'direct', 'fold', 'fold', 'fold', 'fold', False, True, False, 'open', 'open'])
+gestures_list.append(['Е','Up', 'direct', 'fold', 'fold', 'fold', 'fold', False, True, True, 'open', 'open'])
+gestures_list.append(['Е','Up', 'direct', 'arc', 'fold', 'fold', 'fold', True, True, True, 'open', 'open'])
+gestures_list.append(['Е','Up', 'direct', 'arc', 'arc', 'fold', 'arc', True, True, True, 'close', 'close'])
+gestures_list.append(['Е','Up', 'direct', 'fold', 'fold', 'fold', 'fold', True, True, True, 'open', 'open'])
+gestures_list.append(['Е','Up', 'direct', 'arc', 'direct', 'direct', 'arc', True, True, True, 'close', 'close'])
 
 # Zh
 for bmt in TOUCHES:
