@@ -20,13 +20,15 @@ FINGER_POSES = ["direct", "half", "arc", "fold"]
 # allow direct little finger test
 
 # A
-for lfp in FINGER_POSES[0:4:3]:
+for lfp in FINGER_POSES[1:4]:
     for bit in TOUCHES:
         for bmt in TOUCHES:
             for brt in TOUCHES:
                 for ima in ANGLES:
                     for mra in ANGLES:
                         gestures_list.append(["А", "Up", "arc", "fold", "fold", "fold", lfp, bit, bmt, brt, ima, mra])
+                        # gestures_list.append(["А", "Up", "direct", "fold", "fold", "fold", lfp, bit, bmt, brt, ima, mra])
+
 
 # B
 for bfp in BIG_POSES:
@@ -69,6 +71,10 @@ gestures_list.append(['Е','Up', 'direct', 'arc', 'fold', 'fold', 'fold', True, 
 gestures_list.append(['Е','Up', 'direct', 'arc', 'arc', 'fold', 'arc', True, True, True, 'close', 'close'])
 gestures_list.append(['Е','Up', 'direct', 'fold', 'fold', 'fold', 'fold', True, True, True, 'open', 'open'])
 gestures_list.append(['Е','Up', 'direct', 'arc', 'direct', 'direct', 'arc', True, True, True, 'close', 'close'])
+gestures_list.append(['Е','Up', 'direct', 'fold', 'fold', 'fold', 'arc', True, True, True, 'open', 'open'])
+gestures_list.append(['Е','Up', 'direct', 'fold', 'fold', 'fold', 'arc', True, True, True, 'close', 'close'])
+gestures_list.append(['Е','Up', 'direct', 'arc', 'fold', 'fold', 'arc', True, True, True, 'open', 'open'])
+
 
 # Zh
 for bmt in TOUCHES:
@@ -96,6 +102,11 @@ for bfp in BIG_POSES:
                             gestures_list.append(["И", "Up", bfp, ifp, mfp, rfp, lfp, True, False, False, ima, mra])
                             gestures_list.append(["И", "Up", bfp, ifp, mfp, rfp, lfp, True, True, False, ima, mra])
                             gestures_list.append(["И", "Up", bfp, ifp, mfp, rfp, lfp, False, True, False, ima, mra])
+gestures_list.append(["И", "Up", "direct", "arc", "direct", "direct", "direct", True, True, False, "open", "open"])
+gestures_list.append(["И", "Up", "direct", "arc", "direct", "direct", "direct", True, True, False, "close", "open"])
+gestures_list.append(["И", "Up", "direct", "arc", "direct", "direct", "direct", True, True, False, "open", "close"])
+gestures_list.append(["И", "Up", "direct", "arc", "direct", "direct", "direct", True, True, False, "open", "cross"])
+gestures_list.append(["И", "Up", "direct", "arc", "direct", "direct", "direct", True, True, False, "close", "cross"])
 
 
 # Yi # PROBLEM #2

@@ -33,6 +33,8 @@ class Database:
     def __del__(self):
         self.conn.close()
 
+# SQLITE3 in memory google
+
 # db = Database('signs.db')
 
 # for element in gestures_list:

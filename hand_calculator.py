@@ -108,6 +108,6 @@ class handCalculator():
         # result.append(getAngle(landmarks[10], landmarks[9], landmarks[14], MIDDLE_RING_ANGLE))
         result.append(self.getFingerAngle(landmarks[9], landmarks[13], self.getAngle(landmarks[10], landmarks[9], landmarks[14], MIDDLE_RING_ANGLE), landmarks[12], landmarks[16]))
 
-        # print(result)
+        # print(db.get_element(result), result)
         # return letter and index and ring fingers highest points xyz
         return [db.get_element(result), landmarks[8], landmarks[16]]

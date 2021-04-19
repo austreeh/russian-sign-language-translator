@@ -1,23 +1,29 @@
 import math
 import cv2
+import sys
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1' 
 import tensorflow as tf
 import numpy as np
 
 class recognGesture():
     def __init__(self, window_height, window_width):
-        self.static = ["А", "Б", "В", "Г", "Е", "Ж", "Л", "М", "Н", "О", "П", "Р", "С", "Т", "У", "Ф", "Х", "Ч", "Ы", "Э", "Ю", "Я"]
-        self.dynamic = ["Д", "Ш", "И", "З", "К", "Ь"]
+        self.static = ["А", "Б", "Г", "Е", "Ж", "Л", "М", "Н", "О", "П", "Р", "С", "Т", "У", "Ф", "Х", "Ч", "Ы", "Э", "Ю", "Я"]
+        self.dynamic = ["Д", "Ш", "И", "З", "К", "Ь", "В"]
         self.window_height = window_height
         self.window_width = window_width
-        self.dot_area = 20 # in pixels
+        self.dot_area = 40 # in pixels
         
 
     def getMaxCountedLetter(self, letters_lst):
         if letters_lst:
             letters_lst = list(filter(lambda a: a != None, letters_lst))
             if letters_lst:
-                return max(letters_lst,key=letters_lst.count)
-        return " "
+                let = max(letters_lst,key=letters_lst.count)
+                count = np.count_nonzero(np.array(letters_lst) == let)
+                if count >= 5:  # was 6
+                    return max(letters_lst,key=letters_lst.count)
+        return [""]
 
     def twoPointDist(self, first_point, second_point):
         return math.sqrt( (second_point[0] - first_point[0]) * (second_point[0] - first_point[0]) +
@@ -29,26 +35,28 @@ class recognGesture():
             im = cv2.blur(im, (4,4))
             im = tf.keras.utils.normalize(im, axis=-1, order=0)
 
+            work_traj = []
+
             for element in traj_lst:
-                element[0] = element[0] * self.window_width
-                element[1] = element[1] * self.window_height
+                work_traj.append([element[0] * self.window_width, element[1] * self.window_height])
 
             # prediction
             prediction = recognition_model.predict([np.array([im])])
             res = np.argmax(prediction)
 
 
-            # isDot = True
-            # for i in range(1,len(traj_lst)):
-            #     if self.twoPointDist(traj_lst[0], traj_lst[i]) > self.dot_area:
-            #         isDot = False
+            isDot = True
+            for i in range(1,len(work_traj)):
+                if self.twoPointDist(work_traj[0], work_traj[i]) > self.dot_area:
+                    isDot = False
+            # print(work_traj)
+            if isDot:
+                return "."
 
-            # if isDot:
-            #     return "."
 
             # if res is "-" then check direction
             if res == 2:
-                list_of_x = [item[0] for item in traj_lst] 
+                list_of_x = [item[0] for item in work_traj] 
                 if min(list_of_x[0:2]) < max(list_of_x[-2:]):
                     return "->"
                 else:
@@ -61,31 +69,9 @@ class recognGesture():
             return [letter[0], ""]
         else:
             if letter == "И":
-
-                isDot = True
-                for i in range(1,len(trajectory_ring)):
-                    first_point = [trajectory_ring[0][0]*self.window_width, trajectory_ring[0][1]*self.window_height]
-                    second_point = [trajectory_ring[i][0]*self.window_width, trajectory_ring[i][1]*self.window_height]
-                    if self.twoPointDist(first_point, second_point) > self.dot_area:
-                        isDot = False
-
-                if isDot:
-                    return[letter[0],"."]
-
                 self.trajToImg(trajectory_ring)
                 return [letter[0], self.recognTraj(image_path, prediction_model, trajectory_ring)]
             else:
-
-                isDot = True
-                for i in range(1,len(trajectory_index)):
-                    first_point = [trajectory_index[0][0]*self.window_width, trajectory_index[0][1]*self.window_height]
-                    second_point = [trajectory_index[i][0]*self.window_width, trajectory_index[i][1]*self.window_height]
-                    if self.twoPointDist(first_point, second_point) > self.dot_area:
-                        isDot = False
-
-                if isDot:
-                    return[letter[0],"."]
-
                 self.trajToImg(trajectory_index)
                 return [letter[0], self.recognTraj(image_path, prediction_model, trajectory_index)]
 
@@ -99,29 +85,42 @@ class recognGesture():
                 if result_list[1] == "->":
                     return(result_list,"К")
                 else:
-                    return(result_list,"Unknown gesture")
+                    return(result_list,"")
             if result_list[0] == "И":
                 if result_list[1] == "->":
                     return(result_list,"Й")
-                else:
+                if result_list[1] == ".":
                     return(result_list,"И")
+                return("","")
+            if result_list[0] == "В":
+                if result_list[1] == "->":
+                    return(result_list," ")
+                if result_list[1] == "<-":
+                    return(result_list, "\b")
+                if result_list[1] == ".":
+                    return(result_list, "В")
+                return("","")
             if result_list[0] == "Ш": 
                 if result_list[1] == "1":
                     return(result_list,"Щ")
-                else:
+                if result_list[1] == ".":
                     return(result_list,"Ш")
+                return("","")
             if result_list[0] == "З":
                 if result_list[1] == "3":
                     return(result_list,"З")
-                else:
-                    return(result_list,"Unknown gesture")
+                if result_list[1] == ".":
+                    return(result_list,".")
+                if result_list[1] == "1":
+                    return(result_list, ",")
+                return("","")
             if result_list[0] == "Ь": 
                 if result_list[1] == "->":
                     return (result_list,"Ь")
                 if result_list[1] == "<-":
                     return (result_list,"Ъ")
                 else:
-                    return(result_list,"Unknown gesture")
+                    return(result_list,"")
         return(result_list,result_list[0])
 
     def trajToImg(self, traj_lst):
@@ -129,16 +128,15 @@ class recognGesture():
         IMG_SIZE = 28
         PADDING_PART = 4
         trj_image = np.ones((IMG_SIZE, IMG_SIZE))
-
+        work_traj = []
         # step 1. transform all points to pixels
         if traj_lst:
             for element in traj_lst:
-                element[0] = int(round(element[0] * self.window_width))
-                element[1] = int(round(element[1] * self.window_height))
+                work_traj.append([int(round(element[0] * self.window_width)), int(round(element[1] * self.window_height))])
 
         # step 2. find lowest x,y of optimal square
-            list_of_x = [item[0] for item in traj_lst] 
-            list_of_y = [item[1] for item in traj_lst]
+            list_of_x = [item[0] for item in work_traj] 
+            list_of_y = [item[1] for item in work_traj]
             # max "left" point
             minX = min(list_of_x)
             # max "down" point
@@ -168,12 +166,17 @@ class recognGesture():
 
         # step 3. using lowest x,y transform all traj points
             SQUARES_MULTIPLY = IMG_SIZE / (maxY-minY)
-            for element in traj_lst:
+            for element in work_traj:
                 element[0] = int(round((element[0] - minX) * SQUARES_MULTIPLY))
                 element[1] = int(round((element[1] - minY) * SQUARES_MULTIPLY))
 
         # step 4. draw traj by dots
-            for i in range(1,len(traj_lst)):
-                cv2.line(trj_image, (traj_lst[i-1][0],traj_lst[i-1][1]) , (traj_lst[i][0], traj_lst[i][1]), (255, 255, 255), 2)
+            for i in range(1,len(work_traj)):
+                cv2.line(trj_image, (work_traj[i-1][0],work_traj[i-1][1]) , (work_traj[i][0], work_traj[i][1]), (255, 255, 255), 2)
 
             cv2.imwrite('blank_image.jpg', trj_image)
+        # print("*******")
+        # print(traj_lst)
+        # print("-------")
+        # print(work_traj)
+        # print("*******")
