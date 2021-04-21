@@ -8,8 +8,8 @@ import numpy as np
 
 class recognGesture():
     def __init__(self, window_height, window_width):
-        self.static = ["А", "Б", "Г", "Е", "Ж", "Л", "М", "Н", "О", "П", "Р", "С", "Т", "У", "Ф", "Х", "Ч", "Ы", "Э", "Ю", "Я"]
-        self.dynamic = ["Д", "Ш", "И", "З", "К", "Ь", "В"]
+        self.static = ["А", "Б", "В", "Г", "Е", "Ж", "Л", "М", "Н", "О", "П", "Р", "С", "Т", "У", "Ф", "Х", "Ч", "Ы", "Э", "Ю", "Я"]
+        self.dynamic = ["Д", "Ш", "И", "З", "К", "Ь", "Tool"]
         self.window_height = window_height
         self.window_width = window_width
         self.dot_area = 40 # in pixels
@@ -92,14 +92,6 @@ class recognGesture():
                 if result_list[1] == ".":
                     return(result_list,"И")
                 return("","")
-            if result_list[0] == "В":
-                if result_list[1] == "->":
-                    return(result_list," ")
-                if result_list[1] == "<-":
-                    return(result_list, "\b")
-                if result_list[1] == ".":
-                    return(result_list, "В")
-                return("","")
             if result_list[0] == "Ш": 
                 if result_list[1] == "1":
                     return(result_list,"Щ")
@@ -109,16 +101,25 @@ class recognGesture():
             if result_list[0] == "З":
                 if result_list[1] == "3":
                     return(result_list,"З")
-                if result_list[1] == ".":
-                    return(result_list,".")
-                if result_list[1] == "1":
-                    return(result_list, ",")
                 return("","")
             if result_list[0] == "Ь": 
                 if result_list[1] == "->":
                     return (result_list,"Ь")
                 if result_list[1] == "<-":
                     return (result_list,"Ъ")
+                else:
+                    return(result_list,"")
+            if result_list[0] == "Tool":
+                if result_list[1] == "->":
+                    return(result_list, " ")
+                if result_list[1] == "<-":
+                    return(result_list, "\b")
+                if result_list[1] == ".":
+                    return (result_list, ".")
+                if result_list[1] == "1":
+                    return (result_list, ",")
+                if result_list[1] == "0":
+                    return (result_list, "?")
                 else:
                     return(result_list,"")
         return(result_list,result_list[0])
@@ -175,8 +176,3 @@ class recognGesture():
                 cv2.line(trj_image, (work_traj[i-1][0],work_traj[i-1][1]) , (work_traj[i][0], work_traj[i][1]), (255, 255, 255), 2)
 
             cv2.imwrite('blank_image.jpg', trj_image)
-        # print("*******")
-        # print(traj_lst)
-        # print("-------")
-        # print(work_traj)
-        # print("*******")

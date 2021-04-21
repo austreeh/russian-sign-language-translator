@@ -19,6 +19,10 @@ FINGER_POSES = ["direct", "half", "arc", "fold"]
 
 # allow direct little finger test
 
+# tool gesture # use it for ",", ".", " ", "?"
+gestures_list.append(["Tool", "Up", "direct", "direct", "direct", "direct", "direct", False, False, False, "open", "open"])
+gestures_list.append(["Tool", "Up", "direct", "direct", "direct", "direct", "direct", False, False, False, "close", "open"])
+
 # A
 for lfp in FINGER_POSES[1:4]:
     for bit in TOUCHES:

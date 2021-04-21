@@ -92,20 +92,16 @@ class handCalculator():
         # little_finger
         result.append(self.fingerPose(landmarks[0], landmarks[17], landmarks[18], landmarks[19], LITTLE_ALPHA_ANGLE, LITTLE_BETA_ANGLE))
 
-
         # touch index-big
         result.append(self.isTouched(landmarks[4], self.getMiddle(landmarks[7], landmarks[8]) , self.getDistance(landmarks[3], landmarks[4]) * 1.4))   
         # touch middle-big
         result.append(self.isTouched(landmarks[4], self.getMiddle(landmarks[11], landmarks[12]), self.getDistance(landmarks[3], landmarks[4]) * 1.4))
         # touch ring-big
         result.append(self.isTouched(landmarks[4], landmarks[15], self.getDistance(landmarks[3], landmarks[4]) * 1.4))
-
+        
         # index_middle_closed
-        # result.append(getAngle(landmarks[6], landmarks[5], landmarks[10],INDEX_MIDDLE_ANGLE))
         result.append(self.getFingerAngle(landmarks[5], landmarks[9], self.getAngle(landmarks[6], landmarks[5], landmarks[10], INDEX_MIDDLE_ANGLE), landmarks[8], landmarks[12]))
-
         # middle_ring_closed
-        # result.append(getAngle(landmarks[10], landmarks[9], landmarks[14], MIDDLE_RING_ANGLE))
         result.append(self.getFingerAngle(landmarks[9], landmarks[13], self.getAngle(landmarks[10], landmarks[9], landmarks[14], MIDDLE_RING_ANGLE), landmarks[12], landmarks[16]))
 
         # print(db.get_element(result), result)

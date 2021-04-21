@@ -28,7 +28,7 @@ class G():
 
     def __init__(self, calculator, drawing, recognizer, prediction_model):
         self.pause_time = 1
-        self.read_time = 1.5
+        self.read_time = 1.5 + 0.3 # +fault
         self.adding = 0.5
         self.true_frames = 4 # add
         self.calculator = calculator
@@ -110,28 +110,12 @@ class G():
 def main():
     pTime = 0
     cTime = 0
-    gesture_time = time.time()
-    colors = ["R", "Y", "G"]
-    times = [1, 1, 2] # was 1 1 3
-
-    new_colors = ["R","G"]
-    new_times = [0.5, 2]
-    adding = 0.5
-
-    i = 0
     cap = cv2.VideoCapture(0)
-
-    track_time = time.time()
 
     detector = handDetector()
     calculator = handCalculator()
     drawing = drawingHelp(WINDOW_HEIGHT, WINDOW_WIDTH)
     recognizer = recognGesture(WINDOW_HEIGHT, WINDOW_WIDTH)
-
-    test_gesture_list = []
-    traj_gesture_list_index = []
-    traj_gesture_list_ring = []
-
     prediction_model = tf.keras.models.load_model('trajectory_recognition.model')
 
     Go = G(calculator, drawing, recognizer, prediction_model)
