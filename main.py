@@ -103,9 +103,6 @@ class G():
                 return current_time
             return start_time
 
-
-
-
 # main function
 def main():
     pTime = 0
